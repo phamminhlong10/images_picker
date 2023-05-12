@@ -37,6 +37,6 @@ android {
 dependencies {
     implementation 'androidx.annotation:annotation:1.0.2'
 //    implementation 'com.github.LuckSiege:PictureSelectorLight:v2.1.1'
-    implementation 'com.github.phamminhlong10:PictureSelector:the-black-1.0.2'
+    implementation 'com.github.phamminhlong10:PictureSelector:pre-theblack-1.0.3'
     implementation 'com.github.bumptech.glide:glide:4.11.0'
 }
