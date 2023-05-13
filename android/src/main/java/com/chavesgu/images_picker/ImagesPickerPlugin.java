@@ -136,7 +136,8 @@ public class ImagesPickerPlugin implements FlutterPlugin, MethodCallHandler, Act
         int maxTime = call.argument("maxTime");
         HashMap<String, Object> cropOption = call.argument("cropOption");
         String language = call.argument("language");
-
+        int maxSize = call.argument("maxSize");
+        
         int chooseType;
         switch (pickType) {
           case "PickType.video":
@@ -156,6 +157,7 @@ public class ImagesPickerPlugin implements FlutterPlugin, MethodCallHandler, Act
         if (cropOption!=null) Utils.setCropOpt(model, cropOption);
         model.isGif(supportGif);
         model.videoMaxSecond(maxTime);
+        model.filterMaxFileSize(maxSize);
         resolveMedias(model);
         break;
       }
