@@ -30,7 +30,7 @@ class ImagesPicker {
         "pickType": pickType.toString(),
         "gif": gif,
         "maxTime": maxTime,
-        "maxSize": maxSize ?? null,
+        "maxSize": maxSize ?? 0,
         "quality": quality ?? -1,
         "cropOption": cropOpt != null
             ? {
