@@ -46,16 +46,19 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
         let editConfig = ZLEditImageConfiguration();
         if (corpType=="CropType.circle") {
           editConfig.clipRatios = [ZLImageClipRatio.circle]
-        } else {
-          if let aspectRatioX = cropOption!["aspectRatioX"] as? Double,let aspectRatioY = cropOption!["aspectRatioY"] as? Double {
-            editConfig.clipRatios = [ZLImageClipRatio(title: "", whRatio: CGFloat(aspectRatioX/aspectRatioY))];
-          }
         }
         config.editImageConfiguration = editConfig;
+        
         let editImageConfiguration = config.editImageConfiguration
-        editImageConfiguration
+        if let aspectRatioX = cropOption!["aspectRatioX"] as? Double,let aspectRatioY = cropOption!["aspectRatioY"] as? Double {
+          editImageConfiguration
             .tools([.clip])
-            .clipRatios([.wh1x1])
+            .clipRatios([ZLImageClipRatio(title: "", whRatio: CGFloat(aspectRatioX/aspectRatioY))])
+        }else{
+           editImageConfiguration
+            .tools([.clip])
+            .clipRatios([.custom])
+        }
         config
             .editImageConfiguration(editImageConfiguration)
             .editAfterSelectThumbnailImage(true)
