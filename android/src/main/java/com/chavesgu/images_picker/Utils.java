@@ -39,7 +39,7 @@ public class Utils {
                 .setCameraImageFormat(PictureMimeType.JPEG)
                 .setCameraVideoFormat(PictureMimeType.MP4)
                 .renameCompressFile("image_picker_compress_"+UUID.randomUUID().toString()+".jpg")
-                .renameCropFileName("image_picker_crop_"+UUID.randomUUID().toString()+".jpg")
+                //.renameCropFileName("image_picker_crop_"+UUID.randomUUID().toString()+".jpg")
 //                .cameraFileName("image_picker_camera_"+UUID.randomUUID().toString()+".jpg")
         ;
         if (quality > 0) {
