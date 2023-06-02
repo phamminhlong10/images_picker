@@ -53,7 +53,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
         if let aspectRatioX = cropOption!["aspectRatioX"] as? Double,let aspectRatioY = cropOption!["aspectRatioY"] as? Double {
           editImageConfiguration
             .tools([.clip])
-            .clipRatios([ZLImageClipRatio(title: "", whRatio: CGFloat(aspectRatioX/aspectRatioY))])
+            .clipRatios([ZLImageClipRatio(title: "", whRatio: CGFloat(aspectRatioX/aspectRatioY)), .custom])
         }else{
            editImageConfiguration
             .tools([.clip])
