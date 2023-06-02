@@ -6,16 +6,17 @@ class ImagesPicker {
   static const MethodChannel _channel =
       const MethodChannel('chavesgu/images_picker');
 
-  static Future<List<Media>?> pick({
-    int count = 1,
-    PickType pickType = PickType.image,
-    bool gif = true,
-    int maxTime = 120,
-    CropOption? cropOpt,
-    int? maxSize,
-    double? quality,
-    Language language = Language.System,
-  }) async {
+  /// AspectRatioList only use for android platform
+  static Future<List<Media>?> pick(
+      {int count = 1,
+      PickType pickType = PickType.image,
+      bool gif = true,
+      int maxTime = 120,
+      CropOption? cropOpt,
+      int? maxSize,
+      double? quality,
+      Language language = Language.System,
+      List<CropAspectRatio>? aspectRatioList}) async {
     assert(count > 0, 'count must > 0');
     if (quality != null) {
       assert(quality > 0, 'quality must > 0');
@@ -25,6 +26,15 @@ class ImagesPicker {
       assert(maxSize > 0, 'maxSize must > 0');
     }
     try {
+      List<String>? _aspectRatioList;
+      if (aspectRatioList != null) {
+        _aspectRatioList = [];
+        for (final item in aspectRatioList) {
+          _aspectRatioList.add(CropAspectRatio.cropAspectRatioToString(item));
+          print(CropAspectRatio.cropAspectRatioToString(item));
+        }
+      }
+
       List<dynamic>? res = await _channel.invokeMethod('pick', {
         "count": count,
         "pickType": pickType.toString(),
@@ -41,6 +51,7 @@ class ImagesPicker {
               }
             : null,
         "language": language.toString(),
+        "aspectRatioList": _aspectRatioList
       });
       if (res != null) {
         List<Media> output = res.map((image) {
@@ -155,6 +166,7 @@ enum Language {
   Vietnamese,
 }
 
+/// Original & wh1x1 only use for android platform
 class CropAspectRatio {
   final int aspectRatioX;
   final int aspectRatioY;
@@ -170,6 +182,30 @@ class CropAspectRatio {
   static const wh4x3 = CropAspectRatio(4, 3);
   static const wh16x9 = CropAspectRatio(16, 9);
   static const wh9x16 = CropAspectRatio(9, 16);
+  static const original = CropAspectRatio(100, 100);
+  static const wh1x1 = CropAspectRatio(1, 1);
+
+  static String cropAspectRatioToString(CropAspectRatio cropAspectRatio) {
+    switch (cropAspectRatio) {
+      case CropAspectRatio(2, 1):
+        return "wh2x1";
+      case CropAspectRatio(1, 2):
+        return "wh1x2";
+      case CropAspectRatio(3, 4):
+        return "wh3x4";
+      case CropAspectRatio(4, 3):
+        return "wh4x3";
+      case CropAspectRatio(16, 9):
+        return "wh16x9";
+      case CropAspectRatio(9, 16):
+        return "wh9x16";
+      case CropAspectRatio(100, 100):
+        return "original";
+      case CropAspectRatio(1, 1):
+        return "wh1x1";
+    }
+    return "original";
+  }
 }
 
 class CropOption {

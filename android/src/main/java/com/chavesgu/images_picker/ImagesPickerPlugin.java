@@ -137,7 +137,7 @@ public class ImagesPickerPlugin implements FlutterPlugin, MethodCallHandler, Act
         HashMap<String, Object> cropOption = call.argument("cropOption");
         String language = call.argument("language");
         int maxSize = call.argument("maxSize");
-        
+        ArrayList<String> aspectRatioList = call.argument("aspectRatioList");
         int chooseType;
         switch (pickType) {
           case "PickType.video":
@@ -154,7 +154,7 @@ public class ImagesPickerPlugin implements FlutterPlugin, MethodCallHandler, Act
                 .openGallery(chooseType);
         Utils.setLanguage(model, language);
         Utils.setPhotoSelectOpt(model, count, quality);
-        if (cropOption!=null) Utils.setCropOpt(model, cropOption);
+        if (cropOption!=null) Utils.setCropOpt(model, cropOption, aspectRatioList);
         model.isGif(supportGif);
         model.videoMaxSecond(maxTime);
         model.filterMaxFileSize(maxSize);
@@ -189,7 +189,7 @@ public class ImagesPickerPlugin implements FlutterPlugin, MethodCallHandler, Act
         model.recordVideoSecond(maxTime);
         Utils.setLanguage(model, language);
         Utils.setPhotoSelectOpt(model, 1, quality);
-        if (cropOption!=null) Utils.setCropOpt(model, cropOption);
+        if (cropOption!=null) Utils.setCropOpt(model, cropOption, null);
         resolveMedias(model);
         break;
       }
