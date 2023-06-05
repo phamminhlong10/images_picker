@@ -124,7 +124,7 @@ public class Utils {
         if ("wh1x1".equals(name)) {
             return new AspectRatio(null, 1.0f, 1.0f);
         } else if ("original".equals(name)) {
-            return new AspectRatio("ORIGINAL",
+            return new AspectRatio("원본",
                     CropImageView.SOURCE_IMAGE_ASPECT_RATIO, 1.0f);
         } else if ("wh3x2".equals(name)) {
             return new AspectRatio(null, 3.0f, 2.0f);
@@ -139,7 +139,7 @@ public class Utils {
         } else if ("wh16x9".equals(name)) {
             return new AspectRatio(null, 16.0f, 9.0f);
         } else {
-            return new AspectRatio("ORIGINAL",
+            return new AspectRatio("원본",
                     CropImageView.SOURCE_IMAGE_ASPECT_RATIO,  CropImageView.SOURCE_IMAGE_ASPECT_RATIO);
         }
     }
