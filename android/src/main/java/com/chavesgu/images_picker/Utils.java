@@ -72,6 +72,7 @@ public class Utils {
         if(aspectRatioList != null){
             UCrop.Options options = new UCrop.Options();
             options.setFreeStyleCropEnabled(false);
+            model.isDragFrame(false);
             ArrayList<AspectRatio> aspectRatioArrayList = new ArrayList<>();
             for (int i = 0; i < aspectRatioList.size(); i++) {
                 String preset = aspectRatioList.get(i);
