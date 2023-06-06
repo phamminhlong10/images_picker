@@ -3,7 +3,7 @@ import UIKit
 import AssetsLibrary
 import Photos
 import MobileCoreServices
-import ZLPhotoBrowser
+import Project_ZLPhotoBrowserBlack
 
 protocol StringOrInt { }
 
