@@ -57,7 +57,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
         }else{
            editImageConfiguration
             .tools([.clip])
-            .clipRatios([.wh1x1, .custom])
+            .clipRatios([.wh1x1, ZLImageClipRatio(title: "원본", whRatio: 0)])
         }
         config
             .editImageConfiguration(editImageConfiguration)
