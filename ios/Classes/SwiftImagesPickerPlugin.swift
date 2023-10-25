@@ -21,6 +21,8 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+      let vc = UIApplication.shared.delegate!.window!!.rootViewController!;
+      
     if call.method=="pick" {
       let args = call.arguments as? NSDictionary;
       let count = args!["count"] as! Int;
@@ -31,8 +33,6 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
       let maxSize = args!["maxSize"] as? Int;
       let cropOption = args!["cropOption"] as? NSDictionary;
       let theme = args!["theme"] as? NSDictionary;
-
-      let vc = UIApplication.shared.delegate!.window!!.rootViewController!;
       let ac = ZLPhotoPreviewSheet();
       let config = ZLPhotoConfiguration.default();
       self.setLanguage(configuration: config, language: language);
@@ -196,7 +196,10 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
         }
         result(assets != nil);
       }
-    } else {
+    } else if call.method=="close"{
+        vc.dismiss(animated: true)
+    }
+      else {
       result(nil);
     }
   }

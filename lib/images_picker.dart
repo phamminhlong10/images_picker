@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+
 import 'package:flutter/services.dart';
 
 class ImagesPicker {
@@ -139,6 +140,18 @@ class ImagesPicker {
     } on PlatformException catch (e) {
       print(e);
       return false;
+    }
+  }
+
+  ///on close UIVIew on iOS
+  static Future<void> onCloseUIView() async {
+    if (Platform.isIOS) {
+      try {
+        return await _channel.invokeMethod("close");
+      } on PlatformException catch (e) {
+        print(e);
+        throw PlatformException(code: "1");
+      }
     }
   }
 }
