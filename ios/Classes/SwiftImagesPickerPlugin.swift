@@ -35,7 +35,9 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
       let theme = args!["theme"] as? NSDictionary;
       let ac = ZLPhotoPreviewSheet();
       let config = ZLPhotoConfiguration.default();
-      self.setLanguage(configuration: config, language: language);
+      let uiConfig = ZLPhotoUIConfiguration.default();
+      let config = ZLPhotoConfiguration.default();
+      self.setLanguage(configuration: uiConfig, language: language);
       self.setConfig(configuration: config, pickType: pickType);
       config.maxSelectCount = count;
       config.allowSelectGif = supportGif;
@@ -120,9 +122,9 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
 
       let vc = UIApplication.shared.delegate!.window!!.rootViewController!;
       let camera = ZLCustomCamera();
-//      let cameraConfig = ZLCameraConfiguration();
+     let cameraConfig = ZLCameraConfiguration();
       let config = ZLPhotoConfiguration.default();
-      config.maxRecordDuration = maxTime ?? 15;
+      cameraConfig.maxRecordDuration = maxTime ?? 15;
       self.setLanguage(configuration: config, language: language);
       self.setConfig(configuration: config, pickType: pickType);
       if cropOption != nil {
