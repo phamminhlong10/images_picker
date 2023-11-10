@@ -36,7 +36,6 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
       let ac = ZLPhotoPreviewSheet();
       let config = ZLPhotoConfiguration.default();
       let uiConfig = ZLPhotoUIConfiguration.default();
-      let config = ZLPhotoConfiguration.default();
       self.setLanguage(configuration: uiConfig, language: language);
       self.setConfig(configuration: config, pickType: pickType);
       config.maxSelectCount = count;
@@ -480,7 +479,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
     configuration.allowSlideSelect = false;
   }
 
-  private func setLanguage(configuration: ZLPhotoConfiguration, language: String) {
+  private func setLanguage(configuration: ZLPhotoUIConfiguration, language: String) {
     switch language {
     case "Language.Chinese":
       configuration.languageType = .chineseSimplified;
@@ -512,7 +511,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
   }
 
   private func setThemeColor(configuration: ZLPhotoConfiguration, colors: NSDictionary?) {
-    let theme = ZLPhotoThemeColorDeploy();
+//     let theme = ZLPhotoThemeColorDeploy();
 //    configuration.themeColorDeploy = theme;
   }
 }
