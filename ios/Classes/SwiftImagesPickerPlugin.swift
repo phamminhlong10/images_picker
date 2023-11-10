@@ -124,7 +124,9 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
      let cameraConfig = ZLCameraConfiguration();
       let config = ZLPhotoConfiguration.default();
       cameraConfig.maxRecordDuration = maxTime ?? 15;
-      self.setLanguage(configuration: config, language: language);
+
+      let uiConfig = ZLPhotoUIConfiguration.default();
+      self.setLanguage(configuration: uiConfig, language: language);
       self.setConfig(configuration: config, pickType: pickType);
       if cropOption != nil {
         config.allowEditImage = true;
