@@ -65,10 +65,8 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
             .editAfterSelectThumbnailImage(true)
             .showClipDirectlyIfOnlyHasClipTool(true)
       }
-
-      self.setThemeColor(configuration: config, colors: theme);
-
-      ac.selectImageBlock = { (images, assets, isOriginal) in
+//       self.setThemeColor(configuration: config, colors: theme);
+      ac.selectImageBlock = { (sucModels, isOriginal) in
         var resArr = [[String: StringOrInt]]();
         let manager = PHImageManager.default();
         let options = PHVideoRequestOptions();
@@ -77,12 +75,12 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
         options.version = .original;
 
         let group = DispatchGroup();
-        for (index, asset) in assets.enumerated() {
+          for (index, sucModel) in sucModels.enumerated() {
           group.enter();
-          if asset.mediaType==PHAssetMediaType.image {
-            let image = images[index];
-            if self.getImageType(asset: asset)=="gif" && supportGif { // gif 取原路径
-              self.resolveImage(asset: asset, resultHandler: { dir in
+              if sucModel.asset.mediaType==PHAssetMediaType.image {
+                  let image = sucModels[index].image;
+                  if self.getImageType(asset: sucModel.asset)=="gif" && supportGif { // gif 取原路径
+                      self.resolveImage(asset: sucModel.asset, resultHandler: { dir in
                 resArr.append(dir);
                 group.leave();
               });
@@ -90,8 +88,8 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
               resArr.append(self.resolveImage(image: image, maxSize: maxSize));
               group.leave();
             }
-          } else if asset.mediaType==PHAssetMediaType.video {
-            manager.requestAVAsset(forVideo: asset, options: options, resultHandler: { avasset,audioMix,info  in
+              } else if sucModel.asset.mediaType==PHAssetMediaType.video {
+                  manager.requestAVAsset(forVideo: sucModel.asset, options: options, resultHandler: { avasset,audioMix,info  in
               let videoUrl = avasset as! AVURLAsset;
               let url = videoUrl.url;
               // TODO: mov to mp4
@@ -142,8 +140,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
         config.editImageConfiguration = editConfig;
       }
 
-      self.setThemeColor(configuration: config, colors: theme);
-
+//       self.setThemeColor(configuration: config, colors: theme);
       camera.takeDoneBlock = { (image, url) in
         if let image = image {
           var resArr = [[String: StringOrInt]]();
