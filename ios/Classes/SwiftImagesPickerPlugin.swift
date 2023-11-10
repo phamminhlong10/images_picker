@@ -92,6 +92,8 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
                   manager.requestAVAsset(forVideo: sucModel.asset, options: options, resultHandler: { avasset,audioMix,info  in
               let videoUrl = avasset as! AVURLAsset;
               let url = videoUrl.url;
+               logger.log(videoUrl);
+              logger.log(url);
               // TODO: mov to mp4
               resArr.append(self.resolveVideo(url: url));
               group.leave();
