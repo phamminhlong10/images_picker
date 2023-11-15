@@ -72,7 +72,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
         let options = PHVideoRequestOptions();
         options.isNetworkAccessAllowed = true;
         options.deliveryMode = .automatic;
-        options.version = .original;
+//        options.version = .original;
 
         let group = DispatchGroup();
           for (index, sucModel) in sucModels.enumerated() {
