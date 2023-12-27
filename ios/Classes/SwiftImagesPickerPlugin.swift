@@ -22,7 +22,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
       let vc = UIApplication.shared.delegate!.window!!.rootViewController!;
-      
+
     if call.method=="pick" {
       let args = call.arguments as? NSDictionary;
       let count = args!["count"] as! Int;
@@ -40,6 +40,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
       self.setConfig(configuration: config, pickType: pickType);
       config.maxSelectCount = count;
       config.allowSelectGif = supportGif;
+      config.allowSelectOriginal = false;
       config.maxSelectVideoDuration = 7200;
       if cropOption != nil {
         config.allowEditImage = true;
@@ -49,7 +50,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
           editConfig.clipRatios = [ZLImageClipRatio.circle]
         }
         config.editImageConfiguration = editConfig;
-        
+
         let editImageConfiguration = config.editImageConfiguration
         if let aspectRatioX = cropOption!["aspectRatioX"] as? Double,let aspectRatioY = cropOption!["aspectRatioY"] as? Double {
           editImageConfiguration
