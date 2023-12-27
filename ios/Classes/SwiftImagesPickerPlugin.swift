@@ -35,7 +35,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
       let theme = args!["theme"] as? NSDictionary;
       let ac = ZLPhotoPreviewSheet();
       let config = ZLPhotoConfiguration.default();
-      let uiConfig = ZLPhotoUIConfiguration.default();
+      let uiConfig = ZLPhotoUIConfiguration.default().customLanguageKeyValue([.exceededMaxSelectCount: "최대 %ld장의 사진만 선택 가능합니다"]);
       self.setLanguage(configuration: uiConfig, language: language);
       self.setConfig(configuration: config, pickType: pickType);
       config.maxSelectCount = count;
