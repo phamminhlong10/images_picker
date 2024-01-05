@@ -41,6 +41,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
       config.maxSelectCount = count;
       config.allowSelectGif = supportGif;
       config.allowSelectOriginal = false;
+      config.allowPreviewPhotos = false;
       config.maxSelectVideoDuration = 7200;
       if cropOption != nil {
         config.allowEditImage = true;
