@@ -74,8 +74,8 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
                 var resArr = [[String: StringOrInt]]();
                 let manager = PHImageManager.default();
                 let options = PHVideoRequestOptions();
-//                options.isNetworkAccessAllowed = true;
-                 options.deliveryMode = .automatic;
+                options.isNetworkAccessAllowed = true;
+                options.deliveryMode = .automatic;
 //                options.version = .original;
 
 
