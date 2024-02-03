@@ -37,7 +37,7 @@ class _MyAppState extends State<MyApp> {
               onPressed: () async {
                 List<Media>? res = await ImagesPicker.pick(
                     count: 3,
-                    pickType: PickType.all,
+                    pickType: PickType.image,
                     language: Language.System,
                     maxTime: 30,
                     // maxSize: 500,
