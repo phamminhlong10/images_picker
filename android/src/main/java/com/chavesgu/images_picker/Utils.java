@@ -1,6 +1,5 @@
 package com.chavesgu.images_picker;
 
-import android.app.Activity;
 import android.content.pm.ActivityInfo;
 
 import com.luck.picture.lib.PictureSelectionModel;
@@ -19,7 +18,7 @@ import java.util.UUID;
 public class Utils {
     public static PictureSelectionModel setPhotoSelectOpt(PictureSelectionModel model, int count, double quality) {
         model
-                .imageEngine(GlideEngine.createGlideEngine())
+                .imageEngine(PicassoEngine.createPicassoEngine())
                 .maxSelectNum(count)
                 .minSelectNum(1)
                 .maxVideoSelectNum(count)

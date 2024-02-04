@@ -53,6 +53,7 @@ import com.luck.picture.lib.PictureSelectionModel;
 import com.luck.picture.lib.PictureSelector;
 import com.luck.picture.lib.config.PictureConfig;
 import com.luck.picture.lib.config.PictureMimeType;
+import com.luck.picture.lib.engine.ImageEngine;
 import com.luck.picture.lib.entity.LocalMedia;
 import com.luck.picture.lib.language.LanguageConfig;
 import com.luck.picture.lib.listener.OnResultCallbackListener;
