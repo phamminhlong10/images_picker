@@ -43,7 +43,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
             config.allowSelectOriginal = false;
             config.allowPreviewPhotos = false;
             config.maxSelectVideoDuration = 7200;
-            print("aaa 123 vo day native 2");
+
 
             if cropOption != nil {
                 config.allowEditImage = true;
@@ -94,12 +94,41 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
                             group.leave();
                         }
                     } else if sucModel.asset.mediaType==PHAssetMediaType.video {
-                        manager.requestAVAsset(forVideo: sucModel.asset, options: options, resultHandler: { asset,audioMix,_  in
+                        manager.requestAVAsset(forVideo: sucModel.asset, options: options, resultHandler: { asset,audioMix, info  in
+
+
                             if let videoUrl = asset as? AVURLAsset {
                                 let url = videoUrl.url;
 
                                 resArr.append(self.resolveVideo(url: url));
                                 group.leave();
+                            }
+                            else if let avComposition = asset as? AVComposition {
+
+                                //slow-mo video
+                                guard avComposition.tracks.count > 1 else {
+                                    return group.leave();
+                                }
+
+                                guard let exportSession = AVAssetExportSession(asset: avComposition, presetName: AVAssetExportPresetHighestQuality) else {
+                                    return group.leave();
+                                }
+
+                                let exportPath = NSTemporaryDirectory().appendingFormat("temp.mp4")
+                                exportSession.outputURL = NSURL.fileURL(withPath: exportPath)
+                                exportSession.outputFileType = AVFileType.mp4
+
+                                exportSession.exportAsynchronously {
+                                    guard let slowMotionUrl = exportSession.outputURL else {
+                                        return group.leave();
+                                    }
+                                    DispatchQueue.main.sync {
+
+                                        resArr.append(self.resolveVideo(url: slowMotionUrl));
+                                        group.leave();
+
+                                    }
+                                }
                             }
                             else {
                                 group.leave();
@@ -320,6 +349,8 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
         var dir = [String: StringOrInt]();
 
         let urlStr = url.absoluteString;
+        print("aaa 123 vo day native 5", urlStr);
+
         let path = (urlStr as NSString).substring(from: 7);
         dir.updateValue(path, forKey: "path");
 
@@ -334,6 +365,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
             dir.updateValue((size ?? 0) as Int, forKey: "size");
         } catch {
         }
+        print("aaa 123 vo day native 5", dir);
         return dir;
     }
 
