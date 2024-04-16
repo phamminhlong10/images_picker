@@ -114,7 +114,9 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
                                     return group.leave();
                                 }
 
-                                let exportPath = NSTemporaryDirectory().appendingFormat("temp.mp4")
+                                let timestamp = "\(Date().timeIntervalSince1970)"
+                                let exportFileName = "video_\(timestamp).mp4"
+                                let exportPath = NSTemporaryDirectory().appending(exportFileName)
                                 exportSession.outputURL = NSURL.fileURL(withPath: exportPath)
                                 exportSession.outputFileType = AVFileType.mp4
 
