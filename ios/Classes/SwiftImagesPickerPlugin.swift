@@ -110,7 +110,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
                                     return group.leave();
                                 }
 
-                                guard let exportSession = AVAssetExportSession(asset: avComposition, presetName: AVAssetExportPresetHighestQuality) else {
+                                guard let exportSession = AVAssetExportSession(asset: avComposition, presetName: AVAssetExportPresetMediumQuality) else {
                                     return group.leave();
                                 }
 
