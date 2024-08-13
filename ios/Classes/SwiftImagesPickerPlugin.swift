@@ -4,6 +4,7 @@ import AssetsLibrary
 import Photos
 import MobileCoreServices
 import ZLPhotoBrowser
+import AVFoundation
 
 protocol StringOrInt { }
 
@@ -110,7 +111,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
                                     return group.leave();
                                 }
 
-                                guard let exportSession = AVAssetExportSession(asset: avComposition, presetName: AVAssetExportPresetMediumQuality) else {
+                                guard let exportSession = AVAssetExportSession(asset: avComposition, presetName: AVAssetExportPreset1280x720) else {
                                     return group.leave();
                                 }
 
@@ -119,7 +120,21 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
                                 let exportPath = NSTemporaryDirectory().appending(exportFileName)
                                 exportSession.outputURL = NSURL.fileURL(withPath: exportPath)
                                 exportSession.outputFileType = AVFileType.mp4
-
+                                
+                                // keep audio video
+                                let audioTracks = avComposition.tracks(withMediaType: .audio)
+                                var trackMixArray = [AVMutableAudioMixInputParameters]()
+                                for audioTrack in audioTracks {
+                                    let trackMix = AVMutableAudioMixInputParameters(track: audioTrack)
+                                    trackMix.audioTimePitchAlgorithm = .varispeed
+                                    trackMix.setVolume(1.0, at: .zero)
+                                    trackMixArray.append(trackMix)
+                                }
+                                
+                                let audioMix = AVMutableAudioMix()
+                                audioMix.inputParameters = trackMixArray
+                                exportSession.audioMix = audioMix
+                                
                                 exportSession.exportAsynchronously {
                                     guard let slowMotionUrl = exportSession.outputURL else {
                                         return group.leave();
