@@ -76,7 +76,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
                 let manager = PHImageManager.default();
                 let options = PHVideoRequestOptions();
                 options.isNetworkAccessAllowed = true;
-                options.deliveryMode = .automatic;
+                options.deliveryMode = .highQualityFormat;
 //                options.version = .original;
 
 
@@ -94,34 +94,25 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
                             resArr.append(self.resolveImage(image: image, maxSize: maxSize));
                             group.leave();
                         }
-                    } else if sucModel.asset.mediaType==PHAssetMediaType.video {
-                        manager.requestAVAsset(forVideo: sucModel.asset, options: options, resultHandler: { asset,audioMix, info  in
-
-
-                            if let videoUrl = asset as? AVURLAsset {
-                                let url = videoUrl.url;
-
-                                resArr.append(self.resolveVideo(url: url));
-                                group.leave();
+                    } else if sucModel.asset.mediaType == PHAssetMediaType.video {
+                        manager.requestExportSession(forVideo: sucModel.asset,
+                                                     options: options,
+                                                     exportPreset: AVAssetExportPreset1280x720,
+                                                     resultHandler: { exportSession, info in
+                            
+                            guard let exportSession = exportSession else {
+                                print("Failed to get export session.")
+                                return group.leave()
                             }
-                            else if let avComposition = asset as? AVComposition {
-
-                                //slow-mo video
-                                guard avComposition.tracks.count > 1 else {
-                                    return group.leave();
-                                }
-
-                                guard let exportSession = AVAssetExportSession(asset: avComposition, presetName: AVAssetExportPreset1280x720) else {
-                                    return group.leave();
-                                }
-
-                                let timestamp = "\(Date().timeIntervalSince1970)"
-                                let exportFileName = "video_\(timestamp).mp4"
-                                let exportPath = NSTemporaryDirectory().appending(exportFileName)
-                                exportSession.outputURL = NSURL.fileURL(withPath: exportPath)
-                                exportSession.outputFileType = AVFileType.mp4
-                                
-                                // keep audio video
+                            
+                            let timestamp = "\(Date().timeIntervalSince1970)"
+                            let exportFileName = "video_\(timestamp).mp4"
+                            let exportPath = NSTemporaryDirectory().appending(exportFileName)
+                            exportSession.outputURL = NSURL.fileURL(withPath: exportPath)
+                            exportSession.outputFileType = AVFileType.mp4
+                            
+                            // Keep audio video
+                            if let avComposition = exportSession.asset as? AVComposition {
                                 let audioTracks = avComposition.tracks(withMediaType: .audio)
                                 var trackMixArray = [AVMutableAudioMixInputParameters]()
                                 for audioTrack in audioTracks {
@@ -134,25 +125,21 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
                                 let audioMix = AVMutableAudioMix()
                                 audioMix.inputParameters = trackMixArray
                                 exportSession.audioMix = audioMix
-                                
-                                exportSession.exportAsynchronously {
-                                    guard let slowMotionUrl = exportSession.outputURL else {
-                                        return group.leave();
-                                    }
-                                    DispatchQueue.main.sync {
-
-                                        resArr.append(self.resolveVideo(url: slowMotionUrl));
-                                        group.leave();
-
-                                    }
+                            }
+                            
+                            exportSession.exportAsynchronously {
+                                guard let exportedUrl = exportSession.outputURL else {
+                                    print("Export failed.")
+                                    return group.leave()
+                                }
+                                DispatchQueue.main.sync {
+                                    resArr.append(self.resolveVideo(url: exportedUrl))
+                                    group.leave()
                                 }
                             }
-                            else {
-                                group.leave();
-                            }
-                        });
-
-                    } else {
+                        })
+                    }
+ else {
                         group.leave();
                     }
                 }
