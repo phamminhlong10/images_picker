@@ -97,7 +97,7 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
                     } else if sucModel.asset.mediaType == PHAssetMediaType.video {
                         manager.requestExportSession(forVideo: sucModel.asset,
                                                      options: options,
-                                                     exportPreset: AVAssetExportPreset1280x720,
+                                                     exportPreset: AVAssetExportPresetPassthrough,
                                                      resultHandler: { exportSession, info in
                             
                             guard let exportSession = exportSession else {
