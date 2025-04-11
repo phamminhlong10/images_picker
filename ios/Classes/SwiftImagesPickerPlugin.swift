@@ -1,69 +1,82 @@
-import Flutter
-import UIKit
-import AssetsLibrary
-import Photos
-import MobileCoreServices
-import ZLPhotoBrowser
 import AVFoundation
+import AssetsLibrary
+import Flutter
+import MobileCoreServices
+import Photos
+import UIKit
+import ZLPhotoBrowser
 
-protocol StringOrInt { }
+protocol StringOrInt {}
 
-extension Int: StringOrInt { }
-extension UInt64: StringOrInt { }
-extension String: StringOrInt { }
+extension Int: StringOrInt {}
+extension UInt64: StringOrInt {}
+extension String: StringOrInt {}
 
 public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
-    static let channelName:String = "chavesgu/images_picker";
+    static let channelName: String = "chavesgu/images_picker"
 
     public static func register(with registrar: FlutterPluginRegistrar) {
-        let channel = FlutterMethodChannel(name: channelName, binaryMessenger: registrar.messenger())
+        let channel = FlutterMethodChannel(
+            name: channelName, binaryMessenger: registrar.messenger())
         let instance = SwiftImagesPickerPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
 
-    public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-        let vc = UIApplication.shared.delegate!.window!!.rootViewController!;
+    public func handle(
+        _ call: FlutterMethodCall, result: @escaping FlutterResult
+    ) {
+        let vc = UIApplication.shared.delegate!.window!!.rootViewController!
 
-        if call.method=="pick" {
-            let args = call.arguments as? NSDictionary;
-            let count = args!["count"] as! Int;
-            let language = args!["language"] as! String;
-            let pickType = args!["pickType"] as? String;
-            let supportGif = args!["gif"] as! Bool;
-            let maxTime = args!["maxTime"] as! Int;
-            let maxSize = args!["maxSize"] as? Int;
-            let cropOption = args!["cropOption"] as? NSDictionary;
-            let theme = args!["theme"] as? NSDictionary;
-            let ac = ZLPhotoPreviewSheet();
-            let config = ZLPhotoConfiguration.default();
-            let uiConfig = ZLPhotoUIConfiguration.default().customLanguageKeyValue([.exceededMaxSelectCount: "최대 %ld장의 사진만 선택 가능합니다"]);
-            self.setLanguage(configuration: uiConfig, language: language);
-            self.setConfig(configuration: config, pickType: pickType);
-            config.maxSelectCount = count;
-            config.allowSelectGif = supportGif;
-            config.allowSelectOriginal = false;
-            config.allowPreviewPhotos = false;
-            config.maxSelectVideoDuration = 7200;
-
+        if call.method == "pick" {
+            let args = call.arguments as? NSDictionary
+            let count = args!["count"] as! Int
+            let language = args!["language"] as! String
+            let pickType = args!["pickType"] as? String
+            let supportGif = args!["gif"] as! Bool
+            let maxTime = args!["maxTime"] as! Int
+            let maxSize = args!["maxSize"] as? Int
+            let cropOption = args!["cropOption"] as? NSDictionary
+            let theme = args!["theme"] as? NSDictionary
+            let ac = ZLPhotoPreviewSheet()
+            let config = ZLPhotoConfiguration.default()
+            let uiConfig = ZLPhotoUIConfiguration.default()
+                .customLanguageKeyValue([
+                    .exceededMaxSelectCount: "최대 %ld장의 사진만 선택 가능합니다"
+                ])
+            self.setLanguage(configuration: uiConfig, language: language)
+            self.setConfig(configuration: config, pickType: pickType)
+            config.maxSelectCount = count
+            config.allowSelectGif = supportGif
+            config.allowSelectOriginal = false
+            config.allowPreviewPhotos = false
+            config.maxSelectVideoDuration = 7200
 
             if cropOption != nil {
-                config.allowEditImage = true;
-                let corpType = cropOption!["cropType"] as! String;
-                let editConfig = ZLEditImageConfiguration();
-                if (corpType=="CropType.circle") {
+                config.allowEditImage = true
+                let corpType = cropOption!["cropType"] as! String
+                let editConfig = ZLEditImageConfiguration()
+                if corpType == "CropType.circle" {
                     editConfig.clipRatios = [ZLImageClipRatio.circle]
                 }
-                config.editImageConfiguration = editConfig;
+                config.editImageConfiguration = editConfig
 
                 let editImageConfiguration = config.editImageConfiguration
-                if let aspectRatioX = cropOption!["aspectRatioX"] as? Double,let aspectRatioY = cropOption!["aspectRatioY"] as? Double {
+                if let aspectRatioX = cropOption!["aspectRatioX"] as? Double,
+                    let aspectRatioY = cropOption!["aspectRatioY"] as? Double
+                {
                     editImageConfiguration
                         .tools([.clip])
-                        .clipRatios([ZLImageClipRatio(title: "", whRatio: CGFloat(aspectRatioX/aspectRatioY))])
-                }else{
+                        .clipRatios([
+                            ZLImageClipRatio(
+                                title: "",
+                                whRatio: CGFloat(aspectRatioX / aspectRatioY))
+                        ])
+                } else {
                     editImageConfiguration
                         .tools([.clip])
-                        .clipRatios([.wh1x1, ZLImageClipRatio(title: "원본", whRatio: 0)])
+                        .clipRatios([
+                            .wh1x1, ZLImageClipRatio(title: "원본", whRatio: 0),
+                        ])
                 }
                 config
                     .editImageConfiguration(editImageConfiguration)
@@ -72,395 +85,562 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
             }
             //       self.setThemeColor(configuration: config, colors: theme);
             ac.selectImageBlock = { (sucModels, isOriginal) in
-                var resArr = [[String: StringOrInt]]();
-                let manager = PHImageManager.default();
-                let options = PHVideoRequestOptions();
-                options.isNetworkAccessAllowed = true;
-                options.deliveryMode = .highQualityFormat;
-//                options.version = .original;
+                var resArr = [[String: StringOrInt]]()
+                let manager = PHImageManager.default()
+                let options = PHVideoRequestOptions()
+                options.isNetworkAccessAllowed = true
+                options.deliveryMode = .fastFormat
+                // options.version = .original;
 
-
-                let group = DispatchGroup();
+                let group = DispatchGroup()
                 for (index, sucModel) in sucModels.enumerated() {
-                    group.enter();
-                    if sucModel.asset.mediaType==PHAssetMediaType.image {
-                        let image = sucModels[index].image;
-                        if self.getImageType(asset: sucModel.asset)=="gif" && supportGif { // gif 取原路径
-                            self.resolveImage(asset: sucModel.asset, resultHandler: { dir in
-                                resArr.append(dir);
-                                group.leave();
-                            });
+                    group.enter()
+                    if sucModel.asset.mediaType == PHAssetMediaType.image {
+                        let image = sucModels[index].image
+                        if self.getImageType(asset: sucModel.asset) == "gif"
+                            && supportGif
+                        {  // gif 取原路径
+                            self.resolveImage(
+                                asset: sucModel.asset,
+                                resultHandler: { dir in
+                                    resArr.append(dir)
+                                    group.leave()
+                                })
                         } else {
-                            resArr.append(self.resolveImage(image: image, maxSize: maxSize));
-                            group.leave();
+                            resArr.append(
+                                self.resolveImage(
+                                    image: image, maxSize: maxSize))
+                            group.leave()
                         }
-                    } else if sucModel.asset.mediaType == PHAssetMediaType.video {
-                        manager.requestExportSession(forVideo: sucModel.asset,
-                                                     options: options,
-                                                     exportPreset: AVAssetExportPresetPassthrough,
-                                                     resultHandler: { exportSession, info in
-                            
-                            guard let exportSession = exportSession else {
-                                print("Failed to get export session.")
-                                return group.leave()
-                            }
-                            
-                            let timestamp = "\(Date().timeIntervalSince1970)"
-                            let exportFileName = "video_\(timestamp).mp4"
-                            let exportPath = NSTemporaryDirectory().appending(exportFileName)
-                            exportSession.outputURL = NSURL.fileURL(withPath: exportPath)
-                            exportSession.outputFileType = AVFileType.mp4
-                            
-                            // Keep audio video
-                            if let avComposition = exportSession.asset as? AVComposition {
-                                let audioTracks = avComposition.tracks(withMediaType: .audio)
-                                var trackMixArray = [AVMutableAudioMixInputParameters]()
-                                for audioTrack in audioTracks {
-                                    let trackMix = AVMutableAudioMixInputParameters(track: audioTrack)
-                                    trackMix.audioTimePitchAlgorithm = .varispeed
-                                    trackMix.setVolume(1.0, at: .zero)
-                                    trackMixArray.append(trackMix)
+                    } else if sucModel.asset.mediaType == PHAssetMediaType.video
+                    {
+                        print("Export 0")
+                        let resources = PHAssetResource.assetResources(
+                            for: sucModel.asset)
+
+                        if let resource = resources.first(where: {
+                            $0.type == .video || $0.type == .fullSizeVideo
+                        }) {
+                            print("sucModel.asset: \(sucModel.asset)")
+
+                            let timestamp =
+                                "\(Date().timeIntervalSince1970)"
+                            let exportFileName =
+                                "video_\(timestamp).mp4"
+                            let exportPath = NSTemporaryDirectory()
+                                .appending(
+                                    exportFileName)
+                            let exportURL = URL(
+                                fileURLWithPath: exportPath)
+
+                            PHAssetResourceManager.default().writeData(
+                                for: resource, toFile: exportURL,
+                                options: nil
+                            ) { error in
+                                if let error = error {
+                                    print(
+                                        "Failed copying video resource: \(error.localizedDescription)"
+                                    )
+                                    group.leave()
+                                    return
                                 }
-                                
-                                let audioMix = AVMutableAudioMix()
-                                audioMix.inputParameters = trackMixArray
-                                exportSession.audioMix = audioMix
-                            }
-                            
-                            exportSession.exportAsynchronously {
-                                guard let exportedUrl = exportSession.outputURL else {
-                                    print("Export failed.")
-                                    return group.leave()
-                                }
-                                DispatchQueue.main.sync {
-                                    resArr.append(self.resolveVideo(url: exportedUrl))
+
+                                let isSlowMotion =
+                                    sucModel.asset.mediaType
+                                    == PHAssetMediaType.video
+                                    && ((sucModel.asset.mediaSubtypes.rawValue
+                                        & PHAssetMediaSubtype.videoHighFrameRate
+                                        .rawValue) != 0)
+
+                                DispatchQueue.main.async {
+                                    resArr.append(
+                                        self.resolveVideo(
+                                            url: exportURL,
+                                            asset: isSlowMotion
+                                                ? sucModel.asset : nil))
                                     group.leave()
                                 }
                             }
-                        })
-                    }
- else {
-                        group.leave();
+                        } else {
+                            // Nếu không tìm thấy resource gốc thì bỏ qua
+                            group.leave()
+                        }
+                    } else {
+                        group.leave()
                     }
                 }
                 group.notify(queue: .main) {
-                    result(resArr);
+                    result(resArr)
                 }
             }
             ac.cancelBlock = {
-                result(nil);
+                result(nil)
             }
-            ac.showPhotoLibrary(sender: vc);
-        } else if call.method=="openCamera" {  // 相机拍照、录视频
-            let args = call.arguments as? NSDictionary;
-            let language = args!["language"] as! String;
-            let pickType = args!["pickType"] as? String;
-            let cropOption = args!["cropOption"] as? NSDictionary;
-            let maxSize = args!["maxSize"] as? Int;
-            let maxTime = args!["maxTime"] as? Int;
-            let theme = args!["theme"] as? NSDictionary;
+            ac.showPhotoLibrary(sender: vc)
+        } else if call.method == "openCamera" {  // 相机拍照、录视频
+            let args = call.arguments as? NSDictionary
+            let language = args!["language"] as! String
+            let pickType = args!["pickType"] as? String
+            let cropOption = args!["cropOption"] as? NSDictionary
+            let maxSize = args!["maxSize"] as? Int
+            let maxTime = args!["maxTime"] as? Int
+            let theme = args!["theme"] as? NSDictionary
 
-            let vc = UIApplication.shared.delegate!.window!!.rootViewController!;
-            let camera = ZLCustomCamera();
-            let cameraConfig = ZLCameraConfiguration();
-            let config = ZLPhotoConfiguration.default();
-            cameraConfig.maxRecordDuration = maxTime ?? 15;
+            let vc = UIApplication.shared.delegate!.window!!.rootViewController!
+            let camera = ZLCustomCamera()
+            let cameraConfig = ZLCameraConfiguration()
+            let config = ZLPhotoConfiguration.default()
+            cameraConfig.maxRecordDuration = maxTime ?? 15
 
-            let uiConfig = ZLPhotoUIConfiguration.default();
-            self.setLanguage(configuration: uiConfig, language: language);
-            self.setConfig(configuration: config, pickType: pickType);
+            let uiConfig = ZLPhotoUIConfiguration.default()
+            self.setLanguage(configuration: uiConfig, language: language)
+            self.setConfig(configuration: config, pickType: pickType)
             if cropOption != nil {
-                config.allowEditImage = true;
-                let corpType = cropOption!["cropType"] as! String;
-                let editConfig = ZLEditImageConfiguration();
-                if (corpType=="CropType.circle") {
+                config.allowEditImage = true
+                let corpType = cropOption!["cropType"] as! String
+                let editConfig = ZLEditImageConfiguration()
+                if corpType == "CropType.circle" {
                     editConfig.clipRatios = [ZLImageClipRatio.circle]
                 } else {
-                    if let aspectRatioX = cropOption!["aspectRatioX"] as? Double,let aspectRatioY = cropOption!["aspectRatioY"] as? Double {
-                        editConfig.clipRatios = [ZLImageClipRatio(title: "", whRatio: CGFloat(aspectRatioX/aspectRatioY))];
+                    if let aspectRatioX = cropOption!["aspectRatioX"]
+                        as? Double,
+                        let aspectRatioY = cropOption!["aspectRatioY"]
+                            as? Double
+                    {
+                        editConfig.clipRatios = [
+                            ZLImageClipRatio(
+                                title: "",
+                                whRatio: CGFloat(aspectRatioX / aspectRatioY))
+                        ]
                     }
                 }
-                config.editImageConfiguration = editConfig;
+                config.editImageConfiguration = editConfig
             }
 
             //       self.setThemeColor(configuration: config, colors: theme);
             camera.takeDoneBlock = { (image, url) in
                 if let image = image {
-                    var resArr = [[String: StringOrInt]]();
-                    resArr.append(self.resolveImage(image: image, maxSize: maxSize));
-                    result(resArr);
+                    var resArr = [[String: StringOrInt]]()
+                    resArr.append(
+                        self.resolveImage(image: image, maxSize: maxSize))
+                    result(resArr)
                 } else if let url = url {
-                    var resArr = [[String: StringOrInt]]();
-                    resArr.append(self.resolveVideo(url: url));
-                    result(resArr);
+                    var resArr = [[String: StringOrInt]]()
+                    resArr.append(self.resolveVideo(url: url))
+                    result(resArr)
                 } else {
-                    result(nil);
+                    result(nil)
                 }
             }
             camera.cancelBlock = { () in
-                result(nil);
-            };
-            vc.showDetailViewController(camera, sender: nil);
-        } else if call.method=="saveImageToAlbum" {
-            let args = call.arguments as? NSDictionary;
-            let path = args!["path"] as! String;
-            let albumName = args!["albumName"] as? String;
-            let status:PHAuthorizationStatus;
+                result(nil)
+            }
+            vc.showDetailViewController(camera, sender: nil)
+        } else if call.method == "saveImageToAlbum" {
+            let args = call.arguments as? NSDictionary
+            let path = args!["path"] as! String
+            let albumName = args!["albumName"] as? String
+            let status: PHAuthorizationStatus
             if #available(iOS 14, *) {
-                status = PHPhotoLibrary.authorizationStatus(for: .addOnly);
+                status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
             } else {
-                status = PHPhotoLibrary.authorizationStatus();
+                status = PHPhotoLibrary.authorizationStatus()
             }
             if status == .denied || status == .restricted {
-                result(false);
+                result(false)
             } else {
-                let assets = self.saveImageToAlbum(image: UIImage.init(contentsOfFile: path)!);
-                if assets != nil && albumName != nil{
-                    self.saveAssetToCustomAlbum(assets: assets!, name: albumName!);
+                let assets = self.saveImageToAlbum(
+                    image: UIImage.init(contentsOfFile: path)!)
+                if assets != nil && albumName != nil {
+                    self.saveAssetToCustomAlbum(
+                        assets: assets!, name: albumName!)
                 }
-                result(assets != nil);
+                result(assets != nil)
             }
-        } else if call.method=="saveVideoToAlbum" {
-            let args = call.arguments as? NSDictionary;
-            let path = args!["path"] as! String;
-            let albumName = args!["albumName"] as? String;
-            let status:PHAuthorizationStatus;
+        } else if call.method == "saveVideoToAlbum" {
+            let args = call.arguments as? NSDictionary
+            let path = args!["path"] as! String
+            let albumName = args!["albumName"] as? String
+            let status: PHAuthorizationStatus
             if #available(iOS 14, *) {
-                status = PHPhotoLibrary.authorizationStatus(for: .addOnly);
+                status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
             } else {
-                status = PHPhotoLibrary.authorizationStatus();
+                status = PHPhotoLibrary.authorizationStatus()
             }
             if status == .denied || status == .restricted {
-                result(false);
+                result(false)
             } else {
-                let assets = self.saveVideoToAlbum(url: URL(fileURLWithPath: path));
-                if assets != nil && albumName != nil{
-                    self.saveAssetToCustomAlbum(assets: assets!, name: albumName!);
+                let assets = self.saveVideoToAlbum(
+                    url: URL(fileURLWithPath: path))
+                if assets != nil && albumName != nil {
+                    self.saveAssetToCustomAlbum(
+                        assets: assets!, name: albumName!)
                 }
-                result(assets != nil);
+                result(assets != nil)
             }
-        } else if call.method=="close"{
+        } else if call.method == "close" {
             vc.dismiss(animated: true)
-        }
-        else {
-            result(nil);
+        } else if call.method == "convertToSlowMotion" {
+            print("convertToSlowMotion vo day 1")
+            let args = call.arguments as? NSDictionary
+            let identifier = args?["identifier"] as? String ?? ""
+
+            let fetchResult = PHAsset.fetchAssets(
+                withLocalIdentifiers: [identifier], options: nil)
+            guard let asset = fetchResult.firstObject else {
+                result(nil)
+                return
+            }
+            self.processVideo(asset: asset) { processedURL in
+                if let url = processedURL {
+                    var resultMap = [String: StringOrInt]()
+                    resultMap["path"] = url.path
+                    resultMap["size"] =
+                        (try? FileManager.default.attributesOfItem(
+                            atPath: url.path)[.size] as? UInt64) ?? 0
+
+                    if let thumb = self.getVideoThumbPath(url: url.path) {
+                        let thumbData = thumb.jpegData(compressionQuality: 1)
+                        let thumbPath = self.createFile(data: thumbData)
+                        resultMap["thumbPath"] = thumbPath
+                    }
+
+                    result(resultMap)
+                } else {
+                    result(nil)
+                }
+            }
+        } else {
+            result(nil)
         }
     }
 
+    private func processVideo(
+        asset: PHAsset, completion: @escaping (URL?) -> Void
+    ) {
+
+        let manager = PHImageManager.default()
+        let options = PHVideoRequestOptions()
+        options.isNetworkAccessAllowed = true
+        options.deliveryMode = .fastFormat
+        manager.requestExportSession(
+            forVideo: asset,
+            options: options,
+            exportPreset: AVAssetExportPresetPassthrough,
+            resultHandler: { exportSession, info in
+
+                guard let exportSession = exportSession
+                else {
+                    print("Failed to get export session.")
+                    completion(nil)
+                    return
+                }
+
+                let timestamp =
+                    "\(Date().timeIntervalSince1970)"
+                let exportFileName =
+                    "video_\(timestamp).mp4"
+                let exportPath = NSTemporaryDirectory()
+                    .appending(exportFileName)
+                exportSession.outputURL = NSURL.fileURL(
+                    withPath: exportPath)
+                exportSession.outputFileType =
+                    AVFileType.mp4
+
+                // Keep audio video
+                if let avComposition = exportSession.asset
+                    as? AVComposition
+                {
+                    let audioTracks = avComposition.tracks(
+                        withMediaType: .audio)
+                    var trackMixArray = [
+                        AVMutableAudioMixInputParameters
+                    ]()
+                    for audioTrack in audioTracks {
+                        let trackMix =
+                            AVMutableAudioMixInputParameters(
+                                track: audioTrack)
+                        trackMix.audioTimePitchAlgorithm =
+                            .varispeed
+                        trackMix.setVolume(1.0, at: .zero)
+                        trackMixArray.append(trackMix)
+                    }
+
+                    let audioMix = AVMutableAudioMix()
+                    audioMix.inputParameters = trackMixArray
+                    exportSession.audioMix = audioMix
+                }
+
+                exportSession.exportAsynchronously {
+                    guard
+                        let exportedUrl = exportSession
+                            .outputURL
+                    else {
+                        print("Export failed.")
+                        completion(nil)
+                        return
+                    }
+                    DispatchQueue.main.sync {
+                        completion(exportedUrl)
+                    }
+                }
+            })
+    }
+
     // 创建相册
-    private func saveAssetToCustomAlbum(assets: PHFetchResult<PHAsset>, name: String) {
-        var albumCollection:PHAssetCollection?;
-        let albums:PHFetchResult<PHAssetCollection> = PHAssetCollection.fetchAssetCollections(with: .album, subtype: .albumRegular, options: nil);
+    private func saveAssetToCustomAlbum(
+        assets: PHFetchResult<PHAsset>, name: String
+    ) {
+        var albumCollection: PHAssetCollection?
+        let albums: PHFetchResult<PHAssetCollection> =
+            PHAssetCollection.fetchAssetCollections(
+                with: .album, subtype: .albumRegular, options: nil)
         albums.enumerateObjects { (collection, index, _) in
             if collection.localizedTitle == name {
-                albumCollection = collection;
+                albumCollection = collection
             }
         }
         if albumCollection == nil {
             do {
-                var albumId:String = "";
+                var albumId: String = ""
                 try PHPhotoLibrary.shared().performChangesAndWait {
-                    albumId = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: name).placeholderForCreatedAssetCollection.localIdentifier;
+                    albumId =
+                        PHAssetCollectionChangeRequest
+                        .creationRequestForAssetCollection(withTitle: name)
+                        .placeholderForCreatedAssetCollection.localIdentifier
                 }
-                albumCollection = PHAssetCollection.fetchAssetCollections(withLocalIdentifiers: [albumId], options: nil).firstObject;
+                albumCollection =
+                    PHAssetCollection.fetchAssetCollections(
+                        withLocalIdentifiers: [albumId], options: nil
+                    ).firstObject
             } catch {
             }
         }
         if albumCollection != nil {
             do {
                 try PHPhotoLibrary.shared().performChangesAndWait {
-                    let collectionChangeRequest: PHAssetCollectionChangeRequest = PHAssetCollectionChangeRequest(for: albumCollection!)!;
-                    collectionChangeRequest.insertAssets(assets, at: [0]);
+                    let collectionChangeRequest:
+                        PHAssetCollectionChangeRequest =
+                            PHAssetCollectionChangeRequest(
+                                for: albumCollection!)!
+                    collectionChangeRequest.insertAssets(assets, at: [0])
                 }
-                print("save to custom album");
+                print("save to custom album")
             } catch {
-                print(error);
+                print(error)
             }
         }
     }
     // 保存图片到相册
-    private func saveImageToAlbum(image: UIImage)->PHFetchResult<PHAsset>? {
+    private func saveImageToAlbum(image: UIImage) -> PHFetchResult<PHAsset>? {
         do {
-            var assetId:String = "";
+            var assetId: String = ""
             try PHPhotoLibrary.shared().performChangesAndWait {
-                assetId = PHAssetChangeRequest.creationRequestForAsset(from: image).placeholderForCreatedAsset!.localIdentifier;
+                assetId =
+                    PHAssetChangeRequest.creationRequestForAsset(from: image)
+                    .placeholderForCreatedAsset!.localIdentifier
             }
-            return PHAsset.fetchAssets(withLocalIdentifiers: [assetId], options: nil);
+            return PHAsset.fetchAssets(
+                withLocalIdentifiers: [assetId], options: nil)
         } catch {
-            return nil;
+            return nil
         }
     }
     // 保存视频到相册
-    private func saveVideoToAlbum(url: URL)->PHFetchResult<PHAsset>? {
+    private func saveVideoToAlbum(url: URL) -> PHFetchResult<PHAsset>? {
         do {
-            var assetId:String = "";
+            var assetId: String = ""
             try PHPhotoLibrary.shared().performChangesAndWait {
-                assetId = PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: url)!.placeholderForCreatedAsset!.localIdentifier;
+                assetId =
+                    PHAssetChangeRequest.creationRequestForAssetFromVideo(
+                        atFileURL: url)!.placeholderForCreatedAsset!
+                    .localIdentifier
             }
-            return PHAsset.fetchAssets(withLocalIdentifiers: [assetId], options: nil);
+            return PHAsset.fetchAssets(
+                withLocalIdentifiers: [assetId], options: nil)
         } catch {
-            return nil;
+            return nil
         }
     }
 
     // 图片解析  写入tmp
-    private func resolveImage(image: UIImage, maxSize: Int?)->[String: StringOrInt] {
-        var dir = [String: StringOrInt]();
-        let data:Data?;
-        let imagePath:String;
-        if let maxSize = maxSize { // 需要压缩
-            imagePath = self.compressImage(image: image, maxSize: maxSize);
-        } else { // 不需要压缩
-            data = image.jpegData(compressionQuality: 1);
-            imagePath = self.createFile(data: data);
+    private func resolveImage(image: UIImage, maxSize: Int?) -> [String:
+        StringOrInt]
+    {
+        var dir = [String: StringOrInt]()
+        let data: Data?
+        let imagePath: String
+        if let maxSize = maxSize {  // 需要压缩
+            imagePath = self.compressImage(image: image, maxSize: maxSize)
+        } else {  // 不需要压缩
+            data = image.jpegData(compressionQuality: 1)
+            imagePath = self.createFile(data: data)
         }
-        dir.updateValue(imagePath, forKey: "path");
-        dir.updateValue(imagePath, forKey: "thumbPath");
+        dir.updateValue(imagePath, forKey: "path")
+        dir.updateValue(imagePath, forKey: "thumbPath")
         do {
-            let attr = try FileManager.default.attributesOfItem(atPath: imagePath);
-            let fileSize = attr[FileAttributeKey.size] as! UInt64;
-            dir.updateValue(fileSize, forKey: "size");
+            let attr = try FileManager.default.attributesOfItem(
+                atPath: imagePath)
+            let fileSize = attr[FileAttributeKey.size] as! UInt64
+            dir.updateValue(fileSize, forKey: "size")
         } catch {
         }
-        return dir;
+        return dir
     }
     // 解析gif
-    private func resolveImage(asset: PHAsset, resultHandler: @escaping ([String: StringOrInt])->Void)->Void {
-        var dir = [String: StringOrInt]();
-        let options: PHContentEditingInputRequestOptions = PHContentEditingInputRequestOptions()
-        options.canHandleAdjustmentData = {(adjustmeta: PHAdjustmentData) -> Bool in
+    private func resolveImage(
+        asset: PHAsset, resultHandler: @escaping ([String: StringOrInt]) -> Void
+    ) {
+        var dir = [String: StringOrInt]()
+        let options: PHContentEditingInputRequestOptions =
+            PHContentEditingInputRequestOptions()
+        options.canHandleAdjustmentData = {
+            (adjustmeta: PHAdjustmentData) -> Bool in
             return true
         }
-        asset.requestContentEditingInput(with: options, completionHandler: { contentEditingInput, info in
-            if let url = contentEditingInput!.fullSizeImageURL {
-                let urlStr = url.absoluteString;
-                let path = (urlStr as NSString).substring(from: 7);
-                dir.updateValue(path, forKey: "path");
-                dir.updateValue(path, forKey: "thumbPath");
-                do {
-                    let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize;
-                    dir.updateValue((size ?? 0) as Int, forKey: "size");
-                } catch {
+        asset.requestContentEditingInput(
+            with: options,
+            completionHandler: { contentEditingInput, info in
+                if let url = contentEditingInput!.fullSizeImageURL {
+                    let urlStr = url.absoluteString
+                    let path = (urlStr as NSString).substring(from: 7)
+                    dir.updateValue(path, forKey: "path")
+                    dir.updateValue(path, forKey: "thumbPath")
+                    do {
+                        let size = try url.resourceValues(forKeys: [
+                            .fileSizeKey
+                        ]).fileSize
+                        dir.updateValue((size ?? 0) as Int, forKey: "size")
+                    } catch {
+                    }
+                    resultHandler(dir)
+                } else {
+                    resultHandler(dir)
                 }
-                resultHandler(dir);
-            } else {
-                resultHandler(dir);
-            }
-        })
+            })
     }
 
-    private func resolveVideo(url: URL)->[String: StringOrInt] {
-        var dir = [String: StringOrInt]();
+    private func resolveVideo(url: URL, asset: PHAsset? = nil) -> [String:
+        StringOrInt]
+    {
+        var dir = [String: StringOrInt]()
 
-        let urlStr = url.absoluteString;
-        print("aaa 123 vo day native 5", urlStr);
+        let urlStr = url.absoluteString
+        print("aaa 123 vo day native 5", urlStr)
 
-        let path = (urlStr as NSString).substring(from: 7);
-        dir.updateValue(path, forKey: "path");
+        let path = (urlStr as NSString).substring(from: 7)
+        dir.updateValue(path, forKey: "path")
 
         // 获取视频封面图
         if let thumb = self.getVideoThumbPath(url: path) {
-            let thumbData = thumb.jpegData(compressionQuality: 1); // 转Data
-            let thumbPath = self.createFile(data: thumbData); // 写入封面图
-            dir.updateValue(thumbPath, forKey: "thumbPath");
+            let thumbData = thumb.jpegData(compressionQuality: 1)  // 转Data
+            let thumbPath = self.createFile(data: thumbData)  // 写入封面图
+            dir.updateValue(thumbPath, forKey: "thumbPath")
         }
         do {
-            let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize;
-            dir.updateValue((size ?? 0) as Int, forKey: "size");
+            let size = try url.resourceValues(forKeys: [.fileSizeKey]).fileSize
+            dir.updateValue((size ?? 0) as Int, forKey: "size")
         } catch {
         }
-        print("aaa 123 vo day native 5", dir);
-        return dir;
+
+        if let asset = asset {
+            dir["identifier"] = asset.localIdentifier
+        }
+
+        print("aaa 123 vo day native 5", dir)
+        return dir
     }
 
-
-    private func getVideoThumbPath(url: String)->UIImage? {
+    private func getVideoThumbPath(url: String) -> UIImage? {
         do {
-            let avasset = AVAsset.init(url: NSURL.fileURL(withPath: url));
-            let gen = AVAssetImageGenerator.init(asset: avasset);
-            gen.appliesPreferredTrackTransform = true;
-            let time = CMTime.init(seconds: 0.0, preferredTimescale: 600);
-            let image = try gen.copyCGImage(at: time, actualTime: nil);
-            let thumb = UIImage.init(cgImage: image);
-            return thumb;
+            let avasset = AVAsset.init(url: NSURL.fileURL(withPath: url))
+            let gen = AVAssetImageGenerator.init(asset: avasset)
+            gen.appliesPreferredTrackTransform = true
+            let time = CMTime.init(seconds: 0.0, preferredTimescale: 600)
+            let image = try gen.copyCGImage(at: time, actualTime: nil)
+            let thumb = UIImage.init(cgImage: image)
+            return thumb
         } catch {
-            return nil;
+            return nil
         }
     }
 
-    private func createFile(data: Data?)->String {
-        let uuid = UUID().uuidString;
-        let tmpDir = NSTemporaryDirectory();
-        let filename = "\(tmpDir)image_picker_\(uuid).jpg";
-        let fileManager = FileManager.default;
-        fileManager.createFile(atPath: filename, contents: data, attributes: nil);
-        return filename;
+    private func createFile(data: Data?) -> String {
+        let uuid = UUID().uuidString
+        let tmpDir = NSTemporaryDirectory()
+        let filename = "\(tmpDir)image_picker_\(uuid).jpg"
+        let fileManager = FileManager.default
+        fileManager.createFile(
+            atPath: filename, contents: data, attributes: nil)
+        return filename
     }
 
-    private func compressImage(image: UIImage, maxSize: Int)->String {
-        let maxSize = maxSize * 1000; // to kb
-        let image = self.resizeImage(originalImg: image);
-        var compression:CGFloat = 1;
-        var data:Data = image.jpegData(compressionQuality: compression)!;
-        if (data.count < maxSize) {
-            return self.createFile(data: data);
+    private func compressImage(image: UIImage, maxSize: Int) -> String {
+        let maxSize = maxSize * 1000  // to kb
+        let image = self.resizeImage(originalImg: image)
+        var compression: CGFloat = 1
+        var data: Data = image.jpegData(compressionQuality: compression)!
+        if data.count < maxSize {
+            return self.createFile(data: data)
         }
-        var max:CGFloat = 1;
-        var min:CGFloat = 0;
+        var max: CGFloat = 1
+        var min: CGFloat = 0
         for _ in (0...5) {
-            compression = (max + min) / 2;
-            data = image.jpegData(compressionQuality: compression)!;
-            if (data.count < maxSize * Int(0.9)) {
-                min = compression;
-            } else if (data.count > maxSize) {
-                max = compression;
+            compression = (max + min) / 2
+            data = image.jpegData(compressionQuality: compression)!
+            if data.count < maxSize * Int(0.9) {
+                min = compression
+            } else if data.count > maxSize {
+                max = compression
             } else {
-                break;
+                break
             }
         }
-        return self.createFile(data: data);
+        return self.createFile(data: data)
     }
 
-    private func resizeImage(originalImg:UIImage) -> UIImage{
+    private func resizeImage(originalImg: UIImage) -> UIImage {
 
         //prepare constants
         let width = originalImg.size.width
         let height = originalImg.size.height
-        let scale = width/height
+        let scale = width / height
 
         var sizeChange = CGSize()
 
-        if width <= 1280 && height <= 1280{ //a，图片宽或者高均小于或等于1280时图片尺寸保持不变，不改变图片大小
+        if width <= 1280 && height <= 1280 {  //a，图片宽或者高均小于或等于1280时图片尺寸保持不变，不改变图片大小
             return originalImg
-        }else if width > 1280 || height > 1280 {//b,宽或者高大于1280，但是图片宽度高度比小于或等于2，则将图片宽或者高取大的等比压缩至1280
+        } else if width > 1280 || height > 1280 {  //b,宽或者高大于1280，但是图片宽度高度比小于或等于2，则将图片宽或者高取大的等比压缩至1280
 
             if scale <= 2 && scale >= 1 {
-                let changedWidth:CGFloat = 1280
-                let changedheight:CGFloat = changedWidth / scale
+                let changedWidth: CGFloat = 1280
+                let changedheight: CGFloat = changedWidth / scale
                 sizeChange = CGSize(width: changedWidth, height: changedheight)
 
-            }else if scale >= 0.5 && scale <= 1 {
+            } else if scale >= 0.5 && scale <= 1 {
 
-                let changedheight:CGFloat = 1280
-                let changedWidth:CGFloat = changedheight * scale
+                let changedheight: CGFloat = 1280
+                let changedWidth: CGFloat = changedheight * scale
                 sizeChange = CGSize(width: changedWidth, height: changedheight)
 
-            }else if width > 1280 && height > 1280 {//宽以及高均大于1280，但是图片宽高比大于2时，则宽或者高取小的等比压缩至1280
+            } else if width > 1280 && height > 1280 {  //宽以及高均大于1280，但是图片宽高比大于2时，则宽或者高取小的等比压缩至1280
 
-                if scale > 2 {//高的值比较小
+                if scale > 2 {  //高的值比较小
 
-                    let changedheight:CGFloat = 1280
-                    let changedWidth:CGFloat = changedheight * scale
-                    sizeChange = CGSize(width: changedWidth, height: changedheight)
+                    let changedheight: CGFloat = 1280
+                    let changedWidth: CGFloat = changedheight * scale
+                    sizeChange = CGSize(
+                        width: changedWidth, height: changedheight)
 
-                }else if scale < 0.5{//宽的值比较小
+                } else if scale < 0.5 {  //宽的值比较小
 
-                    let changedWidth:CGFloat = 1280
-                    let changedheight:CGFloat = changedWidth / scale
-                    sizeChange = CGSize(width: changedWidth, height: changedheight)
+                    let changedWidth: CGFloat = 1280
+                    let changedheight: CGFloat = changedWidth / scale
+                    sizeChange = CGSize(
+                        width: changedWidth, height: changedheight)
 
                 }
-            }else {//d, 宽或者高，只有一个大于1280，并且宽高比超过2，不改变图片大小
+            } else {  //d, 宽或者高，只有一个大于1280，并且宽高比超过2，不改变图片大小
                 return originalImg
             }
         }
@@ -468,7 +648,9 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
         UIGraphicsBeginImageContext(sizeChange)
 
         //draw resized image on Context
-        originalImg.draw(in: CGRect(x: 0, y: 0, width: sizeChange.width, height: sizeChange.height))
+        originalImg.draw(
+            in: CGRect(
+                x: 0, y: 0, width: sizeChange.width, height: sizeChange.height))
 
         //create UIImage
         let resizedImg = UIGraphicsGetImageFromCurrentImageContext()
@@ -478,13 +660,15 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
         return resizedImg ?? originalImg
     }
 
-    private func getImageType(asset: PHAsset)->String {
+    private func getImageType(asset: PHAsset) -> String {
         if let filename = asset.value(forKey: "filename") as? String {
             if let index = filename.lastIndex(of: ".") {
-                let temp = filename.suffix(from: index);
-                return String(temp.suffix(from: temp.index(temp.startIndex, offsetBy: 1))).lowercased();
+                let temp = filename.suffix(from: index)
+                return String(
+                    temp.suffix(from: temp.index(temp.startIndex, offsetBy: 1))
+                ).lowercased()
             }
-            return "unknown";
+            return "unknown"
         }
         //    if let identifier = asset.value(forKey: "uniformTypeIdentifier") as? String {
         //      if identifier == kUTTypeJPEG as String {
@@ -501,61 +685,67 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
         // kUTTypeJPEG
         // kUTTypeGIF
         // kUTTypePNG
-        return "unknown";
+        return "unknown"
     }
 
-    private func setConfig(configuration: ZLPhotoConfiguration, pickType: String?) {
+    private func setConfig(
+        configuration: ZLPhotoConfiguration, pickType: String?
+    ) {
         //    configuration.style = .externalAlbumList;
-        configuration.allowTakePhotoInLibrary = false;
-        configuration.allowMixSelect = true;
-        configuration.allowEditImage = false;
-        configuration.allowEditVideo = false;
-        configuration.saveNewImageAfterEdit = false;
-        if pickType=="PickType.video" {
-            configuration.allowSelectImage = false;
-            configuration.allowSelectVideo = true;
-        } else if pickType=="PickType.all" {
-            configuration.allowSelectImage = true;
-            configuration.allowSelectVideo = true;
+        configuration.allowTakePhotoInLibrary = false
+        configuration.allowMixSelect = true
+        configuration.allowEditImage = false
+        configuration.allowEditVideo = false
+        configuration.saveNewImageAfterEdit = false
+        if pickType == "PickType.video" {
+            configuration.allowSelectImage = false
+            configuration.allowSelectVideo = true
+        } else if pickType == "PickType.all" {
+            configuration.allowSelectImage = true
+            configuration.allowSelectVideo = true
         } else {
-            configuration.allowSelectImage = true;
-            configuration.allowSelectVideo = false;
+            configuration.allowSelectImage = true
+            configuration.allowSelectVideo = false
         }
-        configuration.allowSlideSelect = false;
+        configuration.allowSlideSelect = false
     }
 
-    private func setLanguage(configuration: ZLPhotoUIConfiguration, language: String) {
+    private func setLanguage(
+        configuration: ZLPhotoUIConfiguration, language: String
+    ) {
         switch language {
         case "Language.Chinese":
-            configuration.languageType = .chineseSimplified;
-            break;
+            configuration.languageType = .chineseSimplified
+            break
         case "Language.ChineseTraditional":
-            configuration.languageType = .chineseTraditional;
-            break;
+            configuration.languageType = .chineseTraditional
+            break
         case "Language.English":
-            configuration.languageType = .english;
-            break;
+            configuration.languageType = .english
+            break
         case "Language.Japanese":
-            configuration.languageType = .japanese;
-            break;
+            configuration.languageType = .japanese
+            break
         case "Language.French":
-            configuration.languageType = .french;
-            break;
+            configuration.languageType = .french
+            break
         case "Language.Korean":
-            configuration.languageType = .korean;
-            break;
+            configuration.languageType = .korean
+            break
         case "Language.German":
-            configuration.languageType = .german;
-            break;
+            configuration.languageType = .german
+            break
         case "Language.Vietnamese":
-            configuration.languageType = .vietnamese;
-            break;
+            configuration.languageType = .vietnamese
+            break
         default:
-            configuration.languageType = .system;
+            configuration.languageType = .system
         }
     }
 
-    private func setThemeColor(configuration: ZLPhotoConfiguration, colors: NSDictionary?) {
+    private func setThemeColor(
+        configuration: ZLPhotoConfiguration, colors: NSDictionary?
+    ) {
         //     let theme = ZLPhotoThemeColorDeploy();
         //    configuration.themeColorDeploy = theme;
     }

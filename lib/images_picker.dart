@@ -60,6 +60,7 @@ class ImagesPicker {
             path: image["path"],
             size: ((image["size"] ?? 0) / 1024).toDouble(),
             thumbPath: image["thumbPath"],
+            identifier: image["identifier"],
           );
           return media;
         }).toList();
@@ -154,6 +155,31 @@ class ImagesPicker {
       }
     }
   }
+
+  ///
+  /// Only for iOS
+  ///
+  static Future<Media?> convertToSlowMotion(
+      {required String identifier}) async {
+    if (!Platform.isIOS) return null;
+    try {
+      final result = await _channel.invokeMethod('convertToSlowMotion', {
+        "identifier": identifier,
+      });
+
+      if (result != null) {
+        return Media(
+          path: result["path"],
+          size: ((result["size"] ?? 0) / 1024).toDouble(),
+          thumbPath: result["thumbPath"],
+        );
+      }
+      return null;
+    } on PlatformException catch (e) {
+      print("convertToSlowMotion error: $e");
+      return null;
+    }
+  }
 }
 
 enum PickType {
@@ -243,9 +269,15 @@ class Media {
   /// 文件大小
   double size;
 
+  ///
+  /// Identifier for slow motion video in iOS
+  ///
+  String? identifier;
+
   Media({
     required this.path,
     this.thumbPath,
     required this.size,
+    this.identifier,
   });
 }
