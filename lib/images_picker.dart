@@ -61,6 +61,7 @@ class ImagesPicker {
             size: ((image["size"] ?? 0) / 1024).toDouble(),
             thumbPath: image["thumbPath"],
             identifier: image["identifier"],
+            duration: image["duration"],
           );
           return media;
         }).toList();
@@ -274,10 +275,16 @@ class Media {
   ///
   String? identifier;
 
+  ///
+  /// Duration of the video in iOS (milliseconds)
+  ///
+  int? duration;
+
   Media({
     required this.path,
     this.thumbPath,
     required this.size,
     this.identifier,
+    this.duration,
   });
 }

@@ -152,10 +152,15 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
                                         & PHAssetMediaSubtype.videoHighFrameRate
                                         .rawValue) != 0)
 
+                                let durationSeconds = sucModel.asset.duration
+                                let durationMilliseconds = Int(
+                                    durationSeconds * 1000)
+
                                 DispatchQueue.main.async {
                                     resArr.append(
                                         self.resolveVideo(
                                             url: exportURL,
+                                            duration: durationMilliseconds,
                                             asset: isSlowMotion
                                                 ? sucModel.asset : nil))
                                     group.leave()
@@ -281,7 +286,6 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
         } else if call.method == "close" {
             vc.dismiss(animated: true)
         } else if call.method == "convertToSlowMotion" {
-            print("convertToSlowMotion vo day 1")
             let args = call.arguments as? NSDictionary
             let identifier = args?["identifier"] as? String ?? ""
 
@@ -520,7 +524,9 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
             })
     }
 
-    private func resolveVideo(url: URL, asset: PHAsset? = nil) -> [String:
+    private func resolveVideo(
+        url: URL, duration: Int? = nil, asset: PHAsset? = nil
+    ) -> [String:
         StringOrInt]
     {
         var dir = [String: StringOrInt]()
@@ -545,6 +551,10 @@ public class SwiftImagesPickerPlugin: NSObject, FlutterPlugin {
 
         if let asset = asset {
             dir["identifier"] = asset.localIdentifier
+        }
+
+        if let duration = duration {
+            dir["duration"] = duration
         }
 
         print("aaa 123 vo day native 5", dir)
